@@ -21,12 +21,6 @@ T = the first 81 odd primes = {3, 5, 7, ..., 421}
 R = 32.523744278634595
 ```
 
-The intended public repository path is
-
-```text
-https://github.com/tomaszkania/unit-distance-gs-optimiser
-```
-
 ## Quick start
 
 ```bash
