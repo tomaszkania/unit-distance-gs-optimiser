@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "unit-distance-gs-optimiser"
+version = "0.1.0"
+description = "Verifier and parameter optimiser for Sawin-style unit-distance lower bounds."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Tomasz Kania", email = "kania@math.cas.cz" }]
+keywords = ["unit distances", "Golod-Shafarevich", "number theory", "discrete geometry"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "mypy>=1.10",
+  "ruff>=0.5",
+]
+notebook = [
+  "jupyterlab>=4",
+]
+
+[project.scripts]
+unit-distance-gs = "unit_distance_gs_optimiser.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/tomaszkania/unit-distance-gs-optimiser"
+Repository = "https://github.com/tomaszkania/unit-distance-gs-optimiser"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/unit_distance_gs_optimiser"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "ANN", "D"]
+ignore = ["D203", "D213"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

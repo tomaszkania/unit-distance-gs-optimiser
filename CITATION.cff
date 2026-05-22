@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this verifier, please cite the repository and Sawin's paper."
+title: "unit-distance-gs-optimiser: parameter verification for Sawin-style unit-distance bounds"
+authors:
+  - family-names: Kania
+    given-names: Tomasz
+year: 2026
+version: 0.1.0
+url: "https://github.com/tomaszkania/unit-distance-gs-optimiser"

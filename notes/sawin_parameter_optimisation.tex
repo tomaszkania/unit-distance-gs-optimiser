@@ -1,0 +1,278 @@
+\documentclass[11pt]{amsart}
+
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\SQ}{S_{\QQ}}
+\newcommand{\rd}{\operatorname{rd}}
+\newcommand{\eps}{\varepsilon}
+\newtheorem{theorem}{Theorem}
+
+\title[A parameter optimisation in Sawin's unit-distance bound]{A parameter optimisation in Sawin's explicit unit-distance lower bound}
+\author[T.~Kania]{Tomasz Kania}
+\address[T.~Kania]{Mathematical Institute\\Czech Academy of Sciences\\ \v{Z}itn\'a 25 \\115 67 Praha 1\\Czech Republic  and  Institute of Mathematics and Computer Science\\ Jagiellonian University\\ {\L}ojasiewicza 6, 30-348 Krak\'{o}w, Poland
+}
+\email{kania@math.cas.cz, tomasz.marcin.kania@gmail.com}
+\date{21 May 2026}
+
+\begin{document}
+
+\begin{abstract}
+  Sawin recently made explicit the exponent in the OpenAI construction of planar point sets with superlinear many unit distances, obtaining an exponent $1.014114$ by a completely explicit refinement of the number-theoretic argument.  This article records a computer-assisted optimisation of the finite parameters in Sawin's proof, with no new theoretical input.  Using $T$ equal to the first $81$ odd primes and a verified certificate for $\SQ$ and $k(p)$, the same proof gives the rounded exponent $1.03172$.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+Let $N(U)$ denote the number of ordered unit-distance pairs in a finite set $U \subset \RR^2$; changing to unordered pairs only changes absolute constants.  The classical unit-distance problem asks how large $N(U)$ can be in terms of $n=\#U$.  Erd\H{o}s gave the long-standing lattice lower bound of shape $n^{1+c/\log\log n}$ and conjectured, in one form, that $n^{1+o(1)}$ should be the correct order of magnitude \cite{Erdos1946,Erdos1982,Erdos1994}.  The best general upper bound remains $O(n^{4/3})$, due to Spencer, Szemer\'edi and Trotter \cite{SpencerSzemerediTrotter1984}.
+
+The recent OpenAI paper \cite{OpenAIUnitDistances} is ground-breaking: it gives the first construction with $N(U) \geqslant n^{1+\delta}$ for infinitely many $n$ and some fixed $\delta>0$, thereby disproving the traditional $n^{1+o(1)}$ expectation.  Its method is also striking because it passes through unramified towers of number fields, Golod--Shafarevich theory, and high-dimensional lattice projections.  The human-digested remarks of Alon--Bloom--Gowers--Litt--Sawin--Shankar--Tsimerman--Wang--Wood \cite{UnitDistanceRemarks} clarify the proof and its provenance, while Bubeck et al. \cite{BubeckEtAlGPT5Science} place this and related developments in the broader context of AI-assisted research.
+
+Sawin's note \cite{SawinExplicitLowerBound} makes the OpenAI construction explicit and sharper.  His Theorem~1 gives, for arbitrarily large $n$, sets $U \subset \RR^2$ with
+\[
+  N(U) \geqslant n^{1.014114}/C
+\]
+for an absolute constant $C$.  The proof reduces the last numerical step to the choice of finite data $T$, $\SQ$, $k$ and $R$ in Lemma~12 and Proposition~10 of \cite{SawinExplicitLowerBound}.  Sawin explicitly notes that these parameters were not optimised very carefully.  This article records the result of optimising precisely those parameters.
+
+The verification code, the JSON certificate, and a Jupyter notebook interface are in the repository
+\begin{center}
+  \url{https://github.com/tomaszkania/unit-distance-gs-optimiser}.
+\end{center}
+The repository is cited as \cite{KaniaRepo}.  The code checks the congruence and splitting conditions exactly, and evaluates the logarithmic expression numerically.
+
+\section{The numerical certificate}
+
+We use Sawin's notation.  Let $T$ be the first $81$ odd primes,
+\[
+  T=\{3,5,7,\ldots,421\}.
+\]
+Then $\#T=81$, and exactly $41$ elements of $T$ are congruent to $3$ modulo $4$, so the parity condition in Lemma~12 of \cite{SawinExplicitLowerBound} is satisfied.  Put
+\[
+  Q=\QQ\!\left(\sqrt{\prod_{q\in T}q}\right).
+\]
+Sawin's Golod--Shafarevich condition (9) is
+\[
+  \#T+\#\SQ+\#\{p\in \SQ:p\text{ splits in }Q\}+1
+  \leqslant \frac{(\#T-1)^2}{4}.
+\]
+For $\#T=81$ this gives the budget
+\[
+  \#\SQ+\#\{p\in \SQ:p\text{ splits in }Q\}\leqslant 1518.
+\]
+The certificate in the repository selects $\#\SQ=1264$ primes, of which $254$ split in $Q$.  Thus
+\[
+  \#\SQ+\#\{p\in \SQ:p\text{ splits in }Q\}=1264+254=1518,
+\]
+so condition (9) is met with equality.
+
+For each selected prime, the certificate also gives a positive integer $k(p)$.  The largest selected prime is $16063$.  The verifier recomputes, rather than trusts, the ramification index
+\[
+  e(p)=
+  \begin{cases}
+    2,& p=2\text{ or }p\in T,\\
+    1,& \text{otherwise},
+  \end{cases}
+\]
+the local admissibility condition of Lemma~12, and whether $p$ splits in $Q$.
+
+With
+\[
+  R=32.523744278634595\ldots,
+\]
+Sawin's equation (11) gives $\delta=A/B$, where
+\[
+\begin{aligned}
+A={}&\log(1-1/R)+\frac12\log(2\pi/e)
++\sum_{p\in\SQ}\frac{1}{4e(p)}\log(k(p)+1)\\
+&-\frac18\log\!\left(4\prod_{q\in T}q\right)
+-\frac12\log\log\sqrt{4\prod_{q\in T}q}
+\end{aligned}
+\]
+and
+\[
+B=\log\!\left(2R\prod_{p\in\SQ}p^{k(p)/(2e(p))}+1\right).
+\]
+The certificate evaluates the numerator and denominator as
+\[
+  168.748528788699\ldots,
+  \qquad
+  5319.585468930850\ldots,
+\]
+respectively, and hence
+\[
+  \delta=0.0317221200362845\ldots .
+\]
+The displayed denominator includes the $+1$ inside the logarithm; at this size the correction is far beyond the displayed precision, but it is included in the verifier.
+
+\begin{theorem}
+  For arbitrarily large $n$, there is a set $U\subset \RR^2$ with $\#U=n$ and
+  \[
+    N(U) \geqslant n^{1.03172}/C
+  \]
+  for an absolute constant $C$.
+\end{theorem}
+
+\begin{proof}
+  The exact congruence and splitting checks in the certificate verify the hypotheses of Lemma~12 of \cite{SawinExplicitLowerBound}.  The equality in the Golod--Shafarevich budget above verifies condition (9).  Therefore Lemma~12 supplies the family of totally real fields $F$ and CM extensions $K=F(i)$ required by Sawin's Proposition~10.
+
+  Substituting the certified $T$, $\SQ$, $k$ and $R$ into Sawin's equation (11) gives $\delta=0.0317221200362845\ldots$.  Proposition~10 therefore gives
+  \[
+    N(U) \geqslant \frac{(\#U)^{1+\delta}}{8\lambda^2},
+    \qquad
+    \lambda=\sqrt{4\prod_{q\in T}q},
+  \]
+  for arbitrarily large $\#U$.  Since $\delta>0.03172$ and $\lambda$ is fixed, the asserted bound follows after absorbing the fixed factor into $C$.
+\end{proof}
+
+\section{How the optimiser chooses the parameters}
+
+The objective is a ratio.  For a trial value of $\delta$, the code maximises
+\[
+  \text{numerator}-\delta\,\text{denominator}.
+\]
+Ignoring only the negligible $+1$ inside the final logarithm during the search, the optimal value of $R$ for the transformed objective is
+\[
+  R=1+\frac1\delta.
+\]
+For a candidate prime $p$, the best exponent is found by maximising
+\[
+  \frac{\log(k+1)}{4e(p)}-\delta\frac{k\log p}{2e(p)}
+\]
+over positive integers $k$.  Once these local scores are known, selecting $\SQ$ is a two-weight knapsack problem: a non-split prime costs $1$ unit of the Golod--Shafarevich budget, and a split prime costs $2$ units.  Since the weights are only $1$ and $2$, sorting the two classes separately and comparing prefix sums solves the selection problem efficiently.
+
+This optimiser is then wrapped in a bisection search for the value at which the transformed objective changes sign.  The final result is not accepted from the optimiser alone: the stored JSON certificate is checked independently by the verifier.  The notebook API exposes the same checks through functions such as \texttt{load\_certificate\_summary} and \texttt{search\_prefix\_summary}.
+
+\section{Limitations}
+
+This improvement is deliberately modest in scope.  It is a parameter-only optimisation inside Sawin's proof, not a new proof of the unit-distance theorem.  It inherits all structural features of Lemma~12 and Proposition~10 in \cite{SawinExplicitLowerBound}, including the use of the explicit relative class-number bound of Louboutin \cite{Louboutin2000}, Golod--Shafarevich tower input \cite{GolodShafarevich1964,Koch1969,Vinberg1965,NeukirchSchmidtWingberg2008}, and the prescribed local splitting conditions.
+
+There are several concrete limitations.
+
+\begin{enumerate}[label=(\roman*)]
+  \item The search reported here mostly explores a prefix family for $T$, namely $T$ equal to the first $m$ odd primes, and then optimises $\SQ$, $k$ and $R$ within that choice.  Non-prefix choices of $T$, different local prescriptions, or a different tower construction could improve the exponent.
+
+  \item A larger $T$ increases the Golod--Shafarevich budget, but also increases the discriminant term
+  \[
+    \log\!\left(4\prod_{q\in T}q\right),
+  \]
+  which is penalised in the numerator.  The numerical problem is therefore a balance, not a monotone gain from adding more ramified primes.
+
+  \item The verifier is numerical in the logarithmic part.  The congruence, primality, ramification and budget checks are exact integer computations, but the displayed value of $\delta$ is floating-point.  A formal version should replace this by interval arithmetic, with a rational lower rounding such as $0.03172$.
+
+  \item The constant $C$ is not optimised.  As in the original theorem, the result is asymptotic along arbitrarily large values of $n$; it should not be read as a useful finite-$n$ construction.
+
+  \item The method remains far below the known upper exponent $4/3$.  Sawin discusses a broader ceiling for this style of argument, noting that even after setting aside some losses, one obtains a general obstruction below $4/3$ unless substantially stronger information about relative class numbers and small split primes is used.  Possible improvements would likely require analytic or algebraic number theory beyond the finite parameter optimisation here, for example sharper relative class-number estimates or variants related to the ideas of Ellenberg--Venkatesh \cite{EllenbergVenkatesh2007}.
+\end{enumerate}
+
+In short, the certificate shows that Sawin's explicit exponent can be pushed from $1.014114$ to $1.03172$ by optimising the visible parameters.  It should be viewed as a reproducible numerical sharpening, not as evidence that the present proof architecture is close to its natural limit.
+
+\begin{thebibliography}{99}
+
+\bibitem{KaniaRepo}
+T.~Kania,
+\emph{unit-distance-gs-optimiser: parameter verification for Sawin-style unit-distance bounds},
+2026,
+\url{https://github.com/tomaszkania/unit-distance-gs-optimiser}.
+
+\bibitem{SawinExplicitLowerBound}
+W.~Sawin,
+\emph{An explicit lower bound for the unit distance problem},
+2026,
+arXiv:2605.20579.
+
+\bibitem{OpenAIUnitDistances}
+OpenAI,
+\emph{Planar Point Sets with Many Unit Distances},
+2026,
+\url{https://cdn.openai.com/pdf/74c24085-19b0-4534-9c90-465b8e29ad73/unit-distance-proof.pdf}.
+
+\bibitem{UnitDistanceRemarks}
+N.~Alon, T.~F. Bloom, W.~T. Gowers, D.~Litt, W.~Sawin, A.~Shankar, J.~Tsimerman, V.~Wang and M.~Matchett Wood,
+\emph{Remarks on the disproof of the unit distance conjecture},
+2026, arXiv preprint.
+
+\bibitem{BubeckEtAlGPT5Science}
+S.~Bubeck, C.~Coester, R.~Eldan, T.~Gowers, Y.~T. Lee, A.~Lupsasca, M.~Sawhney, R.~Scherrer, M.~Sellke, B.~K. Spears, D.~Unutmaz, K.~Weil, S.~Yin and N.~Zhivotovskiy,
+\emph{Early experiments in accelerating science with GPT-5},
+2025, arXiv:2511.16072.
+
+\bibitem{Erdos1946}
+P.~Erd\H{o}s,
+\emph{On sets of distances of {$n$} points},
+The American Mathematical Monthly \textbf{53} (1946), no.~5, 248--250.
+
+\bibitem{Erdos1982}
+P.~Erd\H{o}s,
+\emph{Some of my favourite problems which recently have been solved},
+Proceedings of the International Mathematical Conference, Elsevier, 1982, 59--79.
+
+\bibitem{Erdos1994}
+P.~Erd\H{o}s,
+\emph{Some problems in number theory, combinatorics and combinatorial geometry},
+Mathematica Pannonica \textbf{5} (1994), no.~2, 261--269.
+
+\bibitem{GolodShafarevich1964}
+E.~S. Golod and I.~R. Shafarevich,
+\emph{On the class field tower},
+Izv. Akad. Nauk SSSR Ser. Mat. \textbf{28} (1964), 261--272.
+
+\bibitem{Koch1969}
+H.~Koch,
+\emph{Zum Satz von Golod-Schafarewitsch},
+Mathematische Nachrichten \textbf{42} (1969), no.~4--6, 321--333.
+
+\bibitem{Vinberg1965}
+E.~B. Vinberg,
+\emph{On the theorem concerning the infinite-dimensionality of an associative algebra},
+Izv. Akad. Nauk SSSR Ser. Mat. \textbf{29} (1965), 209--214.
+
+\bibitem{HajirMaireRamakrishna2021}
+F.~Hajir, C.~Maire and R.~Ramakrishna,
+\emph{On the Shafarevich group of restricted ramification extensions of number fields in the tame case},
+Indiana University Mathematics Journal \textbf{70} (2021), no.~6, 2693--2710.
+
+\bibitem{EllenbergVenkatesh2007}
+J.~S. Ellenberg and A.~Venkatesh,
+\emph{Reflection principles and bounds for class group torsion},
+International Mathematics Research Notices (2007), no.~1.
+
+\bibitem{Louboutin2000}
+S.~Louboutin,
+\emph{Explicit bounds for residues of Dedekind zeta functions, values of {$L$}-functions at {$s=1$}, and relative class numbers},
+Journal of Number Theory \textbf{85} (2000), no.~2, 263--282.
+
+\bibitem{NeukirchSchmidtWingberg2008}
+J.~Neukirch, A.~Schmidt and K.~Wingberg,
+\emph{Cohomology of Number Fields},
+Springer, Berlin, Heidelberg, 2008.
+
+\bibitem{Lenstra1986}
+H.~W. Lenstra Jr.,
+\emph{Codes from algebraic number fields},
+Mathematics and Computer Science II, CWI Monographs, vol.~4, North-Holland, Amsterdam, 1986, 95--104.
+
+\bibitem{LitsynTsfasman1987}
+S.~N. Litsyn and M.~A. Tsfasman,
+\emph{Constructive high-dimensional sphere packings},
+Duke Mathematical Journal \textbf{54} (1987), no.~1, 147--151.
+
+\bibitem{Washington1997}
+L.~C. Washington,
+\emph{Introduction to Cyclotomic Fields},
+Springer, New York, 1997.
+
+\bibitem{SpencerSzemerediTrotter1984}
+J.~Spencer, E.~Szemer\'edi and W.~T. Trotter Jr.,
+\emph{Unit distances in the Euclidean plane},
+Graph Theory and Combinatorics (Cambridge, 1983), Academic Press, London, 1984, 293--303.
+
+\end{thebibliography}
+
+\end{document}
