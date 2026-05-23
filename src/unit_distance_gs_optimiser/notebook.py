@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from .model import Certificate, VerificationReport, verify_certificate
-from .search import optimise_prefix
+from .search import optimise_prefix, optimise_t, swap_search
 
 
 def report_summary(report: VerificationReport) -> dict[str, object]:
@@ -65,6 +65,23 @@ def certificate_summary(certificate: Certificate) -> dict[str, object]:
     return summary
 
 
+def load_certificate(path: str | Path) -> Certificate:
+    """Load a JSON certificate for use in notebooks.
+
+    Parameters
+    ----------
+    path:
+        Path to a JSON certificate.
+
+    Returns
+    -------
+    Certificate
+        Parsed certificate.
+    """
+
+    return Certificate.read_json(path)
+
+
 def load_certificate_summary(path: str | Path) -> dict[str, object]:
     """Load, verify and summarise a certificate.
 
@@ -79,7 +96,7 @@ def load_certificate_summary(path: str | Path) -> dict[str, object]:
         Notebook-friendly certificate summary.
     """
 
-    return certificate_summary(Certificate.read_json(path))
+    return certificate_summary(load_certificate(path))
 
 
 def search_prefix_summary(t_size: int = 81, *, prime_limit: int = 200_000) -> dict[str, object]:
@@ -110,6 +127,83 @@ def search_prefix_summary(t_size: int = 81, *, prime_limit: int = 200_000) -> di
     return summary
 
 
+def search_t_summary(t: Sequence[int], *, prime_limit: int = 200_000) -> dict[str, object]:
+    """Run the optimiser for an explicit ``T`` and return a flat summary.
+
+    Parameters
+    ----------
+    t:
+        Explicit ramified prime set.
+    prime_limit:
+        Candidate prime search limit.
+
+    Returns
+    -------
+    dict[str, object]
+        Search and verification summary.
+    """
+
+    result = optimise_t(t, prime_limit=prime_limit)
+    summary = certificate_summary(result.certificate)
+    summary.update(
+        {
+            "search_prime_limit": result.prime_limit,
+            "positivity_threshold": result.positivity_threshold,
+            "candidate_limit_exceeds_threshold": result.prime_limit > result.positivity_threshold,
+        }
+    )
+    return summary
+
+
+def swap_search_summary(
+    *,
+    t_size: int = 81,
+    prime_limit: int = 200_000,
+    add_prime_limit: int = 1_300,
+    steps: int = 2,
+    top_swaps: int = 2,
+) -> dict[str, object]:
+    """Run the greedy swap search and return a notebook-friendly summary.
+
+    Parameters
+    ----------
+    t_size:
+        Size of the prefix starting set.
+    prime_limit:
+        Candidate prime search limit for each exact optimisation.
+    add_prime_limit:
+        Upper bound for primes that may be swapped into ``T``.
+    steps:
+        Maximum number of greedy accepted steps.
+    top_swaps:
+        Number of heuristic proposals optimised exactly at each step.
+
+    Returns
+    -------
+    dict[str, object]
+        Summary of the best certificate and accepted swaps.
+    """
+
+    result = swap_search(
+        t_size=t_size,
+        prime_limit=prime_limit,
+        add_prime_limit=add_prime_limit,
+        steps=steps,
+        top_swaps=top_swaps,
+    )
+    summary = certificate_summary(result.best.certificate)
+    summary.update(
+        {
+            "evaluated_moves": result.evaluated_moves,
+            "accepted_swaps": [
+                f"{step.move.drop} -> {step.move.add}" for step in result.steps
+            ],
+            "initial_delta": certificate_summary(result.initial.certificate)["delta"],
+        }
+    )
+    return summary
+
+
 def markdown_summary_table(summary: Mapping[str, object]) -> str:
     """Format a summary dictionary as a Markdown table.
 
@@ -130,60 +224,40 @@ def markdown_summary_table(summary: Mapping[str, object]) -> str:
     return "\n".join(rows)
 
 
-def _required_real(summary: Mapping[str, object], key: str) -> float:
-    """Read a required real-valued entry from a notebook summary.
+def exponent_markdown(
+    verified_summary: Mapping[str, object], found_summary: Mapping[str, object] | None = None
+) -> str:
+    """Format the headline exponent in Markdown.
 
     Parameters
     ----------
-    summary:
-        Summary mapping produced by this module.
-    key:
-        Required key.
-
-    Returns
-    -------
-    float
-        Numeric value converted to ``float``.
-
-    Raises
-    ------
-    KeyError
-        If ``key`` is absent.
-    TypeError
-        If the value is not an ``int`` or ``float``.
-    """
-
-    value = summary[key]
-    if not isinstance(value, (int, float)):
-        msg = f"summary[{key!r}] is not numeric"
-        raise TypeError(msg)
-    return float(value)
-
-
-def exponent_markdown(summary: Mapping[str, object], *, title: str = "Resulting exponent") -> str:
-    """Format the verified exponent as notebook Markdown.
-
-    Parameters
-    ----------
-    summary:
-        Summary produced by :func:`load_certificate_summary` or
-        :func:`search_prefix_summary`.
-    title:
-        Markdown heading used at the top of the rendered block.
+    verified_summary:
+        Summary for a stored certificate.
+    found_summary:
+        Optional summary produced by re-running a search.
 
     Returns
     -------
     str
-        Markdown block displaying ``delta`` and ``1 + delta``.
+        Markdown text displaying the verified and, when present, found exponent.
     """
 
-    delta = _required_real(summary, "delta")
-    exponent = _required_real(summary, "exponent")
-    validity = summary.get("valid", "unknown")
-    return (
-        f"### {title}\n\n"
-        f"Certificate valid: **{validity}**.\n\n"
-        "The computed exponent increment is\n\n"
-        f"\\[\\delta = {delta:.15f},\\qquad 1+\\delta = {exponent:.15f}.\\]\n\n"
-        f"Rounded theorem exponent: **{exponent:.5f}**."
-    )
+    verified_exponent = float(verified_summary["exponent"])
+    verified_delta = float(verified_summary["delta"])
+    lines = [
+        "### Headline exponent",
+        "",
+        f"Stored certificate: `delta = {verified_delta:.15f}`, ",
+        f"so `1 + delta = {verified_exponent:.15f}`.",
+    ]
+    if found_summary is not None:
+        found_exponent = float(found_summary["exponent"])
+        found_delta = float(found_summary["delta"])
+        lines.extend(
+            [
+                "",
+                f"Re-run optimiser: `delta = {found_delta:.15f}`, ",
+                f"so `1 + delta = {found_exponent:.15f}`.",
+            ]
+        )
+    return "\n".join(lines)
