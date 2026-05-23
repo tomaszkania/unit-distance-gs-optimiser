@@ -1,5 +1,4 @@
 # unit-distance-gs-optimiser
-Tomasz Kania, tomasz.marcin.kania@gmail.com
 
 A typed Python verifier and parameter optimiser for Will Sawin's explicit lower
 bound for the planar unit-distance problem.
